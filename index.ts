@@ -1,10 +1,10 @@
 import { exit } from "node:process";
-import { spawn } from "node:child_process";
 import commandLineArgs from "command-line-args";
 import commandLineUsage from "command-line-usage";
 import { formatParseError, parseTasks, type Task } from "./lib/parser";
 import { log, type Result } from "./lib/utils";
 import { fillGaps } from "./lib/gaps";
+import { requestTaskName } from "./lib/jira";
 
 // google sheets example
 // "[LP-642] Add rate limiting to member enrollments
@@ -48,9 +48,10 @@ function main() {
 			description: "task entries; see examples below",
 		},
 		{
-			name: "dry",
+			name: "write",
 			type: Boolean,
-			description: "dry run won't send anything to jira",
+			alias: "w",
+			description: "write work logs to jira",
 		},
 		{
 			name: "sloppy",
@@ -88,10 +89,10 @@ function main() {
 	const parseResult = parseTasks(opts.task);
 
 	if (parseResult.status === "failure") {
-		console.log("Things went wrong:");
+		console.error("Things went wrong:");
 
 		for (const err of parseResult.error) {
-			console.log(`- ${formatParseError(err)}`);
+			console.error(`- ${formatParseError(err)}`);
 		}
 
 		exit(1);
@@ -99,9 +100,30 @@ function main() {
 
 	const gapsResult = fillGaps(parseResult.result);
 
-	log(gapsResult);
+	if (gapsResult.status === "failure") {
+		console.error(
+			`Couldn't fill in the gaps. Reason: ${gapsResult.error.type}, ${gapsResult.error.left} minutes left.`,
+		);
+		exit(1);
+	}
 
-	// spawn("xdotool", ["key", "XF86Launch1"]);
+	const tasks = gapsResult.result;
+
+	const taskNames: Record<string, string> = {};
+	for (const task of tasks) {
+		const nameResult = requestTaskName(task.id);
+
+		if (nameResult.status === "failure") {
+			console.error(
+				`Couldn't retrieve the task ${task.id} from Jira. Reason: ${nameResult.error}`,
+			);
+			exit(1);
+		}
+
+		taskNames[task.id] = nameResult.result;
+	}
+
+	log(taskNames)
 }
 
 main();
