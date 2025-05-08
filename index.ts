@@ -4,7 +4,8 @@ import commandLineUsage from "command-line-usage";
 import { formatParseError, parseTasks, type Task } from "./lib/parser";
 import { log, type Result } from "./lib/utils";
 import { fillGaps } from "./lib/gaps";
-import { requestTaskName } from "./lib/jira";
+import { requestTaskName, writeWorklog } from "./lib/jira";
+import { formatCell } from "./lib/cell";
 
 // google sheets example
 // "[LP-642] Add rate limiting to member enrollments
@@ -54,10 +55,16 @@ function main() {
 			description: "write work logs to jira",
 		},
 		{
-			name: "sloppy",
-			type: Boolean,
-			description: "don't care if the sum is not equal to 8h",
+			name: "date",
+			type: String,
+			alias: "d",
+			description: "overwrite the date (defaults to today)",
 		},
+		// {
+		// 	name: "sloppy",
+		// 	type: Boolean,
+		// 	description: "don't care if the sum is not equal to 8h",
+		// },
 		{
 			name: "help",
 			type: Boolean,
@@ -86,6 +93,8 @@ function main() {
 		exit();
 	}
 
+	console.log("Parsing tasks...");
+
 	const parseResult = parseTasks(opts.task);
 
 	if (parseResult.status === "failure") {
@@ -98,6 +107,8 @@ function main() {
 		exit(1);
 	}
 
+	console.log("Filling the gaps...");
+
 	const gapsResult = fillGaps(parseResult.result);
 
 	if (gapsResult.status === "failure") {
@@ -109,7 +120,10 @@ function main() {
 
 	const tasks = gapsResult.result;
 
+	console.log("Requesting task names from Jira...");
+
 	const taskNames: Record<string, string> = {};
+
 	for (const task of tasks) {
 		const nameResult = requestTaskName(task.id);
 
@@ -123,7 +137,22 @@ function main() {
 		taskNames[task.id] = nameResult.result;
 	}
 
-	log(taskNames)
+	if (opts.write) {
+		console.log("Writing worklogs to jira...")
+
+		const worklogResult = writeWorklog(tasks, opts.date);
+
+		if (worklogResult.status === "failure") {
+			console.error(`Couldn't write worklogs. Reason: ${worklogResult.error}.`)
+		}
+	} else {
+		console.log("Dry run, use --write to write logs to jira.")
+	}
+
+	console.log("Done!\n")
+	console.log("Your Google Sheet cell:\n")
+	console.log(formatCell(tasks, taskNames))
+	console.log("\nThank you for your business!")
 }
 
 main();

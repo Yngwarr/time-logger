@@ -1,0 +1,16 @@
+{
+  [0mtask[2m:[0m [ [0m[32m"1"[0m[0m[0m[2m,[0m [0m[32m"622"[0m[0m ][0m[2m,[0m
+}
+Parsing tasks...
+[ [0m[32m"1"[0m[0m[0m[2m,[0m [0m[32m"622"[0m[0m ]
+Filling the gaps...
+Requesting task names from Jira...
+Dry run, use --write to write logs to jira.
+Done!
+
+Your Google Sheet cell:
+
+"[LP-1] Create Mobile Repository
+[LP-622] Enhance Create Profile screen UX"	8
+
+Thank you for your business!
