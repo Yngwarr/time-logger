@@ -86,8 +86,6 @@ function main() {
 		},
 	]);
 
-	log(opts);
-
 	if (opts.help || opts.task === undefined || opts.task.length === 0) {
 		console.log(usageInfo);
 		exit();

@@ -48,6 +48,7 @@ export function writeWorklog(
 
 		const result = spawnSync("jira", [
 			"issue",
+			"worklog",
 			"add",
 			task.id,
 			time,

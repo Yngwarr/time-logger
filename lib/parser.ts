@@ -53,8 +53,6 @@ function parseTime(token: string): number | null {
 }
 
 export function parseTasks(tokens: string[]): ParseResult {
-	log(tokens);
-
 	const tasks: Task[] = [];
 	const errors: ParseError[] = [];
 
