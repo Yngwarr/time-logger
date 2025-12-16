@@ -60,11 +60,11 @@ function main() {
 			alias: "d",
 			description: "overwrite the date (defaults to today)",
 		},
-		// {
-		// 	name: "sloppy",
-		// 	type: Boolean,
-		// 	description: "don't care if the sum is not equal to 8h",
-		// },
+		{
+			name: "sloppy",
+			type: Boolean,
+			description: "don't care if the sum is not equal to 8h",
+		},
 		{
 			name: "help",
 			type: Boolean,
@@ -105,18 +105,26 @@ function main() {
 		exit(1);
 	}
 
-	console.log("Filling the gaps...");
+	let tasks: Task[]
 
-	const gapsResult = fillGaps(parseResult.result);
+	if (opts.sloppy) {
+		console.log("Not filling gaps because --sloppy.");
 
-	if (gapsResult.status === "failure") {
-		console.error(
-			`Couldn't fill in the gaps. Reason: ${gapsResult.error.type}, ${gapsResult.error.left} minutes left.`,
-		);
-		exit(1);
+		tasks = parseResult.result
+	} else {
+		console.log("Filling the gaps...");
+
+		const gapsResult = fillGaps(parseResult.result);
+
+		if (gapsResult.status === "failure") {
+			console.error(
+				`Couldn't fill in the gaps. Reason: ${gapsResult.error.type}, ${gapsResult.error.left} minutes left.`,
+			);
+			exit(1);
+		}
+
+		tasks = gapsResult.result;
 	}
-
-	const tasks = gapsResult.result;
 
 	console.log("Requesting task names from Jira...");
 
